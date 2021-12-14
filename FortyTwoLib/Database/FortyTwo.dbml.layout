@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ordesignerObjectsDiagram dslVersion="1.0.0.0" absoluteBounds="0, 0, 11, 9.25" name="FortyTwo">
+  <DataContextMoniker Name="/FortyTwoDataContext" />
+  <nestedChildShapes>
+    <classShape Id="fba35c4a-21d8-43b9-8ea6-44b5f003a014" absoluteBounds="0.875, 3, 2, 3.1212996419270818">
+      <DataClassMoniker Name="/FortyTwoDataContext/Player" />
+      <nestedChildShapes>
+        <elementListCompartment Id="8d261793-3bbc-4eb7-93e8-4135c2ad5718" absoluteBounds="0.89, 3.46, 1.9700000000000002, 2.561299641927083" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <classShape Id="7da9e677-55c7-44dc-be94-ccb7cc11d2be" absoluteBounds="6, 3, 2, 1.4436466471354168">
+      <DataClassMoniker Name="/FortyTwoDataContext/Game" />
+      <nestedChildShapes>
+        <elementListCompartment Id="97326ed1-51de-4f35-8887-60e42948d7cf" absoluteBounds="6.015, 3.46, 1.9700000000000002, 0.88364664713541674" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <classShape Id="fbb6dda4-9d8a-4016-881d-5597e26a6579" absoluteBounds="3.5, 3, 2, 2.4502384440104166">
+      <DataClassMoniker Name="/FortyTwoDataContext/GamePlayer" />
+      <nestedChildShapes>
+        <elementListCompartment Id="16c0bfcc-3f15-4a21-b759-3a0818a5dae8" absoluteBounds="3.5149999999999997, 3.46, 1.9700000000000002, 1.8902384440104165" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <associationConnector edgePoints="[(6 : 3.72182332356771); (5.5 : 3.72182332356771)]" fixedFrom="NotFixed" fixedTo="NotFixed">
+      <AssociationMoniker Name="/FortyTwoDataContext/Game/Game_GamePlayer" />
+      <nodes>
+        <classShapeMoniker Id="7da9e677-55c7-44dc-be94-ccb7cc11d2be" />
+        <classShapeMoniker Id="fbb6dda4-9d8a-4016-881d-5597e26a6579" />
+      </nodes>
+    </associationConnector>
+    <associationConnector edgePoints="[(2.875 : 4.22511922200521); (3.5 : 4.22511922200521)]" fixedFrom="NotFixed" fixedTo="NotFixed">
+      <AssociationMoniker Name="/FortyTwoDataContext/Player/Player_GamePlayer" />
+      <nodes>
+        <classShapeMoniker Id="fba35c4a-21d8-43b9-8ea6-44b5f003a014" />
+        <classShapeMoniker Id="fbb6dda4-9d8a-4016-881d-5597e26a6579" />
+      </nodes>
+    </associationConnector>
+    <classShape Id="9f8317e4-97ab-48eb-95ad-0a94d3af5f53" absoluteBounds="3.5, 6, 2, 2.9535343424479166">
+      <DataClassMoniker Name="/FortyTwoDataContext/GamePlayerBid" />
+      <nestedChildShapes>
+        <elementListCompartment Id="a395fff8-9ce3-428a-9bd2-e6d36bb7432f" absoluteBounds="3.5149999999999997, 6.46, 1.9700000000000002, 2.3935343424479165" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <associationConnector edgePoints="[(4.5 : 5.45023844401042); (4.5 : 6)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+      <AssociationMoniker Name="/FortyTwoDataContext/GamePlayer/GamePlayer_GamePlayerBid" />
+      <nodes>
+        <classShapeMoniker Id="fbb6dda4-9d8a-4016-881d-5597e26a6579" />
+        <classShapeMoniker Id="9f8317e4-97ab-48eb-95ad-0a94d3af5f53" />
+      </nodes>
+    </associationConnector>
+  </nestedChildShapes>
+</ordesignerObjectsDiagram>

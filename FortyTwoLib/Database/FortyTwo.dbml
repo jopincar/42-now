@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Database Name="fortyTwo" EntityNamespace="FortyTwoLib.Database" ContextNamespace="FortyTwoLib.Database" Class="FortyTwoDataContext" xmlns="http://schemas.microsoft.com/linqtosql/dbml/2007">
+  <Table Name="dbo.Game" Member="Game">
+    <Type Name="Game">
+      <Column Name="GameId" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="StartDate" Type="System.DateTime" DbType="DateTime NOT NULL" CanBeNull="false" />
+      <Column Name="EndDate" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="WinningTeam" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="HintCount" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="FirstHintDate" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Association Name="FK_GamePlayer_GameId" Member="GamePlayer" ThisKey="GameId" OtherKey="GameId" Type="GamePlayer" DeleteRule="NO ACTION" />
+      <Association Name="FK_Trick_GameId" Member="Trick" ThisKey="GameId" OtherKey="GameId" Type="Trick" DeleteRule="NO ACTION" />
+    </Type>
+  </Table>
+  <Table Name="dbo.GamePlayer" Member="GamePlayer">
+    <Type Name="GamePlayer">
+      <Column Name="GamePlayerId" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="GameId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="PlayerId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="Seat" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="MarksWon" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="MarksLost" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="LowMarksWon" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="LowMarksLost" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="BidsMadeSum" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="BidsSetSum" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Association Name="FK_GamePlayer_GameId" Member="Game" ThisKey="GameId" OtherKey="GameId" Type="Game" IsForeignKey="true" />
+      <Association Name="FK_GamePlayer_PlayerId" Member="Player" ThisKey="PlayerId" OtherKey="PlayerId" Type="Player" IsForeignKey="true" />
+      <Association Name="FK_GamePlayerBid_PlayerId_GameId" Member="GamePlayerBid" ThisKey="PlayerId,GameId" OtherKey="PlayerId,GameId" Type="GamePlayerBid" DeleteRule="NO ACTION" />
+    </Type>
+  </Table>
+  <Table Name="dbo.GamePlayerBid" Member="GamePlayerBid">
+    <Type Name="GamePlayerBid">
+      <Column Name="GamePlayerBidId" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="PlayerId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="GameId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="HandCount" Type="System.Byte" DbType="TinyInt NOT NULL" CanBeNull="false" />
+      <Column Name="BidPosition" Type="System.Byte" DbType="TinyInt NOT NULL" CanBeNull="false" />
+      <Column Name="Amount" Type="System.Byte" DbType="TinyInt NOT NULL" CanBeNull="false" />
+      <Column Name="TrumpSuit" Type="System.Int16" DbType="SmallInt NOT NULL" CanBeNull="false" />
+      <Column Name="IsLow" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="IsWinning" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="WasMade" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="TricksPlayed" Type="System.Byte" DbType="TinyInt NOT NULL" CanBeNull="false" />
+      <Column Name="Hand" Type="System.String" DbType="NVarChar(50) NOT NULL" CanBeNull="false" />
+      <Column Name="CreateDate" Type="System.DateTime" DbType="SmallDateTime NOT NULL" CanBeNull="false" />
+      <Association Name="FK_GamePlayerBid_PlayerId_GameId" Member="GamePlayer" ThisKey="PlayerId,GameId" OtherKey="PlayerId,GameId" Type="GamePlayer" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.Player" Member="Player">
+    <Type Name="Player">
+      <Column Name="PlayerId" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="PlayerName" Type="System.String" DbType="VarChar(20) NOT NULL" CanBeNull="false" />
+      <Column Name="Password" Type="System.String" DbType="VarChar(50) NOT NULL" CanBeNull="false" />
+      <Column Name="Email" Type="System.String" DbType="VarChar(255) NOT NULL" CanBeNull="false" />
+      <Column Name="PasswordQuestion" Type="System.String" DbType="VarChar(500)" CanBeNull="true" />
+      <Column Name="PasswordAnswer" Type="System.String" DbType="VarChar(500)" CanBeNull="true" />
+      <Column Name="IsApproved" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="IsLockedOut" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="Comment" Type="System.String" DbType="VarChar(250) NOT NULL" CanBeNull="false" />
+      <Column Name="CreationDate" Type="System.DateTime" DbType="DateTime NOT NULL" CanBeNull="false" />
+      <Column Name="LastLoginDate" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="LastActivityDate" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="LastPasswordChangeDate" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="LastLockoutDate" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="RoleId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Association Name="FK_GamePlayer_PlayerId" Member="GamePlayer" ThisKey="PlayerId" OtherKey="PlayerId" Type="GamePlayer" DeleteRule="NO ACTION" />
+      <Association Name="FK_Player_Role_RoleId" Member="Role" ThisKey="RoleId" OtherKey="RoleId" Type="Role" IsForeignKey="true" />
+      <Association Name="FK_SavedHand_PlayerId" Member="SavedHand" ThisKey="PlayerId" OtherKey="PlayerId" Type="SavedHand" DeleteRule="NO ACTION" />
+    </Type>
+  </Table>
+  <Table Name="dbo.Role" Member="Role">
+    <Type Name="Role">
+      <Column Name="RoleId" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="RoleName" Type="System.String" DbType="NVarChar(50) NOT NULL" CanBeNull="false" />
+      <Column Name="CreateDate" Type="System.DateTime" DbType="DateTime NOT NULL" CanBeNull="false" />
+      <Column Name="CreateUser" Type="System.String" DbType="NVarChar(100) NOT NULL" CanBeNull="false" />
+      <Association Name="FK_Player_Role_RoleId" Member="Player" ThisKey="RoleId" OtherKey="RoleId" Type="Player" DeleteRule="NO ACTION" />
+    </Type>
+  </Table>
+  <Table Name="dbo.SavedHand" Member="SavedHand">
+    <Type Name="SavedHand">
+      <Column Name="SavedHandId" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="PlayerId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="Hand" Type="System.String" DbType="VarChar(50) NOT NULL" CanBeNull="false" />
+      <Column Name="CreateDate" Type="System.DateTime" DbType="DateTime NOT NULL" CanBeNull="false" />
+      <Association Name="FK_SavedHand_PlayerId" Member="Player" ThisKey="PlayerId" OtherKey="PlayerId" Type="Player" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.Trick" Member="Trick">
+    <Type Name="Trick">
+      <Column Name="TrickId" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="GameId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="HandCount" Type="System.Byte" DbType="TinyInt NOT NULL" CanBeNull="false" />
+      <Column Name="TrickOrder" Type="System.Byte" DbType="TinyInt NOT NULL" CanBeNull="false" />
+      <Column Name="Bones" Type="System.String" DbType="NVarChar(50) NOT NULL" CanBeNull="false" />
+      <Column Name="LeadSeat" Type="System.Byte" DbType="TinyInt NOT NULL" CanBeNull="false" />
+      <Column Name="WinSeat" Type="System.Byte" DbType="TinyInt NOT NULL" CanBeNull="false" />
+      <Column Name="CreateDate" Type="System.DateTime" DbType="SmallDateTime NOT NULL" CanBeNull="false" />
+      <Association Name="FK_Trick_GameId" Member="Game" ThisKey="GameId" OtherKey="GameId" Type="Game" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.vw_aspnet_Applications" Member="Vw_aspnet_Applications">
+    <Type Name="Vw_aspnet_Applications" />
+  </Table>
+  <Table Name="dbo.vw_aspnet_MembershipUsers" Member="Vw_aspnet_MembershipUsers">
+    <Type Name="Vw_aspnet_MembershipUsers" />
+  </Table>
+  <Table Name="dbo.vw_aspnet_Profiles" Member="Vw_aspnet_Profiles">
+    <Type Name="Vw_aspnet_Profiles" />
+  </Table>
+  <Table Name="dbo.vw_aspnet_Roles" Member="Vw_aspnet_Roles">
+    <Type Name="Vw_aspnet_Roles" />
+  </Table>
+  <Table Name="dbo.vw_aspnet_Users" Member="Vw_aspnet_Users">
+    <Type Name="Vw_aspnet_Users" />
+  </Table>
+  <Table Name="dbo.vw_aspnet_UsersInRoles" Member="Vw_aspnet_UsersInRoles">
+    <Type Name="Vw_aspnet_UsersInRoles" />
+  </Table>
+  <Table Name="dbo.vw_aspnet_WebPartState_Paths" Member="Vw_aspnet_WebPartState_Paths">
+    <Type Name="Vw_aspnet_WebPartState_Paths" />
+  </Table>
+  <Table Name="dbo.vw_aspnet_WebPartState_Shared" Member="Vw_aspnet_WebPartState_Shared">
+    <Type Name="Vw_aspnet_WebPartState_Shared" />
+  </Table>
+  <Table Name="dbo.vw_aspnet_WebPartState_User" Member="Vw_aspnet_WebPartState_User">
+    <Type Name="Vw_aspnet_WebPartState_User" />
+  </Table>
+</Database>

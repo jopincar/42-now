@@ -1,0 +1,26 @@
+﻿div.gameContainer
+{
+	width: 770px;
+}
+
+div.tricksInner 
+{
+	width: 190px; 
+	height: 472px;
+}
+
+div.hand 
+{
+	width: 340px; 
+	height: 85px;
+}
+
+div.messagesOuter
+{
+	width: 340px; 
+}
+
+div.messages
+{
+	height: 55px;
+}

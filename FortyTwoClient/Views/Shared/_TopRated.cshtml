@@ -1,0 +1,17 @@
+﻿@model FortyTwoClient.Models.StatsModel
+@using FortyTwoLib
+
+@{   
+	var grid = new WebGrid(source: Model.GetTopPlayers(3), defaultSort: "WinRate", rowsPerPage: 3, canPage: false, canSort: false); 
+}
+
+<div style="text-align: center">
+@Html.ActionLink("Top Players", "", "Stats")
+</div>
+@grid.GetHtml(tableStyle: "grid", alternatingRowStyle: "grid-alt", rowStyle: "grid-row", displayHeader: false, 
+	columns: grid.Columns( 
+	grid.Column("PlayerName", "Name"),
+	grid.Column("WinRate", "Win%", (item) => (item.WinRate * 100).ToString("0.0"), "grid-numeric-column"), 
+	grid.Column("GamesWon", "Won", style: "grid-numeric-column"), 
+	grid.Column("GamesPlayed", "Played", style: "grid-numeric-column"))
+)

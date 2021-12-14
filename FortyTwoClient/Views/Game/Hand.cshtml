@@ -1,0 +1,44 @@
+﻿@model FortyTwoClient.Models.HandModel
+@{
+    ViewBag.Title = "Hand";
+	var grid = new WebGrid(source: Model.GetHands(), defaultSort: "Hand", rowsPerPage: 10, canPage: true, canSort: true);
+}
+
+<h2>Hand</h2>
+<p>
+	Enter the seven dominoes you want to play as a list of two numbers delimited by spaces,
+	<br />
+	EG "51 52 60 41 32 33 11"
+</p>
+
+<script src="@Url.Content("~/Scripts/jquery.validate.min.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/jquery.validate.unobtrusive.min.js")" type="text/javascript"></script>
+
+@Html.ValidationSummary(false, "Please enter a valid hand and try again.")
+
+@using (Html.BeginForm()) {
+    <div>
+        <fieldset>
+            <div class="editor-label">
+                @Html.LabelFor(m => m.Hand)
+            </div>
+            <div class="editor-field">
+                @Html.TextBoxFor(m => m.Hand, new { maxlength=20 })
+                @Html.ValidationMessageFor(m => m.Hand)
+            </div>
+
+            <p>
+                <input type="submit" value="Play Hand" />
+            </p>
+        </fieldset>
+    </div>
+}
+
+<div>
+@grid.GetHtml(tableStyle: "grid", alternatingRowStyle: "grid-alt", rowStyle: "grid-row", displayHeader: true, headerStyle: "grid-head", footerStyle: "grid-foot", 
+	columns: grid.Columns( 
+		grid.Column("Hand", null, (item) => Html.ActionLink(((string)item.Hand), "PlayHand", new { hand = item.Hand })) )
+	)
+
+
+</div>

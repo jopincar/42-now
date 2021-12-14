@@ -1,0 +1,41 @@
+﻿@model FortyTwoClient.Models.StatsModel
+@using FortyTwoLib
+
+@{
+    ViewBag.Title = "TopPlayers";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+	var grid = new WebGrid(source: Model.GetTopPlayers(int.MaxValue), defaultSort: "WinRate", rowsPerPage: 15, canPage: true, canSort: true);
+	if (Request.QueryString[grid.SortDirectionFieldName].IsEmpty())
+	{
+		grid.SortDirection = SortDirection.Descending;
+	}
+	
+}
+
+<div>
+	<div style="float:left;"><h2>Top Players</h2></div>
+	<div style="float:left; margin-left: 10px; margin-top: 0.5em">
+		* Sign in<br />
+		* Don't use hints (suggest bid or suggest play)<br />
+		* Play at least 5 eligible games in the last 60 days<br /> 
+	</div>
+	<div style="clear:both"></div>
+</div>
+
+<div>
+@grid.GetHtml(tableStyle: "grid", alternatingRowStyle: "grid-alt", rowStyle: "grid-row", displayHeader: true, headerStyle: "grid-head", footerStyle: "grid-foot", 
+	columns: grid.Columns( 
+		grid.Column("PlayerName", "Name"),
+		grid.Column("WinRate", "Win%", (item) => (item.WinRate * 100).ToString("0.0"), "grid-numeric-column"), 
+		grid.Column("GamesWon", "Won", style: "grid-numeric-column"),
+		grid.Column("GamesPlayed", "Played", style: "grid-numeric-column"),
+		grid.Column("BidsMadeRate", "Made%", (item) => (item.BidsMadeRate * 100).ToString("0.0"), "grid-numeric-column"),
+		grid.Column("BidsMade", "Bids Made", style: "grid-numeric-column"),
+		grid.Column("BidsWon", "Bids Won", style: "grid-numeric-column"),
+		grid.Column("LowBidsMadeRate", "LowMade%", (item) => (item.LowBidsMadeRate * 100).ToString("0.0"), "grid-numeric-column"),
+		grid.Column("LowBidsMade", "Low Bids Made", style: "grid-numeric-column"),
+		grid.Column("LowBidsWon", "Low Bids Won", style: "grid-numeric-column"),
+		grid.Column("LastPlayDate", "Last", (item) => string.Format("{0:d}", item.LastPlayDate))
+	)
+)
+</div>

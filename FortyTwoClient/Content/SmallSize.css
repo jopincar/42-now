@@ -1,0 +1,37 @@
+﻿div.gameContainer
+{
+	width: 718px;
+}
+
+div.tricksInner 
+{
+	width: 135px; 
+	height: 304px;
+}
+
+div.bidForm
+{
+	width: 270px;
+	height: 361px;
+}
+
+div.players
+{
+	height: 157px;
+}
+
+div.hand 
+{
+	width: 400px; 
+	height: 100px;
+}
+
+div.messagesOuter
+{
+	width: 412px; 
+}
+
+div.messages
+{
+	height: 70px;
+}

@@ -1,0 +1,23 @@
+﻿@model FortyTwoClient.Models.ResetModel
+
+@{
+	ViewBag.Title = "Reset";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Reset</h2>
+
+@if ( Model.HasTable )
+{
+	<p>
+		Warning! Pressing RESET below cause all current progress in this game to be lost
+		and a detailed error report to be logged.  Use this option only if you are unable to 
+		play due to technical difficulties.
+	</p>
+
+	<button onclick=" location.href = '@Url.Action("RemoveTable")';return false; ">RESET</button>
+}
+else
+{
+	<p>Cannot find any active games for you.</p>
+}

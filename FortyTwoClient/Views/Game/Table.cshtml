@@ -1,0 +1,602 @@
+﻿@model FortyTwoClient.Models.TableModel
+@using FortyTwoLib
+
+@{
+    ViewBag.Title = Model.Table.Name;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link href="@Url.Content("~/Content/" + Model.SizeDescription + "Size.css")" rel="stylesheet" type="text/css" />
+}
+
+<script type="text/javascript">
+	var imgSrc = "@Url.Action("GetDominoImage", "Game", new RouteValueDictionary(new { dots = "11", size = Model.DominoWidth, horizontal = true }))";
+	var imgSrcVert = "@Url.Action("GetDominoImage", "Game", new RouteValueDictionary(new { dots = "11", size = Model.HandDominoWidth, horizontal = false }))";
+	var imgSrcVertSmall = "@Url.Action("GetDominoImage", "Game", new RouteValueDictionary(new { dots = "11", size = Model.DominoWidth, horizontal = false }))";
+	var playerNames = new Array(4);
+	var dominoWidth = @Model.DominoWidth;
+	playerNames[0] = '@Model.PlayerNameBySeat(0)';
+	playerNames[1] = '@Model.PlayerNameBySeat(1)';
+	playerNames[2] = '@Model.PlayerNameBySeat(2)';
+	playerNames[3] = '@Model.PlayerNameBySeat(3)';
+	var gameOver = '@Model.GameOver()' == 'True';
+
+	$(document).ready(function () {
+		if ( gameOver ) return;
+
+		$("#Bid_IsLow").click(function () {
+			GetValidBidAmounts();
+			GetValidSuits();
+		});
+		
+		$("div.dominoDropppable").droppable({
+			drop: function (event, ui) {
+				var d = ui.draggable[0];
+				var dots = GetDots(d);
+				$.ajax({
+					type: "POST",
+					url: '@Url.Action("PlayDomino")',
+					data: "{'dots':'" + dots + "'}",
+					contentType: "application/json; charset=utf-8",
+					dataType: "json",
+					success: function (result) {
+						DisplayErrorMessage(result);
+						if (result == "") {
+							ui.draggable.hide(200);
+							//ui.draggable.remove();
+							$("#PlayDiv").hide(200);
+						}
+					},
+					error: function (xhr, status, error) {
+						DisplayErrorMessage("Error playing domino: " + status + "(" + error + ")");
+					}
+				});
+
+			}
+		});
+		ApplyHandEvents();
+		waitForMsg();
+	});
+
+	function waitForMsg() 
+	{
+		$.ajax({
+			type: "POST",
+			url: '@Url.Action("Poll")',
+			data: "",
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+			success: function (result) {
+				var timeOut = result != null ? 300 : 1000;
+				HandleMessage(result);
+				if ( !gameOver) setTimeout('waitForMsg()', timeOut);
+			},
+			error: function (xhr, status, error) {
+				DisplayErrorMessage("Error polling server: " + status + "(" + error + ")");
+				if ( !gameOver) setTimeout('waitForMsg()', 5000);
+			}
+		});
+	}
+
+	function HandleMessage(msg) 
+	{
+		if (msg == null) return;
+
+		switch (msg.MessageType) {
+			case "TableAddedPlayer":
+				TableAddedPlayer(msg);
+				break;
+			case "MarkStarted":
+				MarkStarted(msg);
+				break;
+			case "GetBid":
+				GetBid(msg);
+				break;
+			case "BidMade":
+				BidMade(msg);
+				break;
+			case "BidWon":
+				BidWon(msg);
+				break;
+			case "GetPlay": 
+				GetPlay(msg.WhoseTurn);
+				break;
+			case "PlayMade":
+				PlayMade(msg);
+				break;
+			case "TrickWon":
+				TrickWon(msg);
+				break;
+			case "MarkWon":
+				MarkWon(msg);
+				break;
+			case "GameWon":
+				GameWon(msg);
+				break;
+			case "ServerError":
+				ServerError(msg);
+				break;
+			default:
+				DisplayErrorMessage("Received unknown message type " + msg.MessageType);
+		}
+	}
+
+	function TableAddedPlayer(msg) {
+		$("#player" + msg.Position + " .playerName").html(msg.NewPlayerName);
+		playerNames[msg.Position] = msg.NewPlayerName;
+		AddMessage(msg.NewPlayerName + " joined the table.");
+	}
+
+	function MarkStarted(msg) {
+		$("img.handDomino").remove();
+		var dominos = msg.Hand.split(",");
+		var handDiv = $("#hand");
+		var domPosX = 9;
+		for (i in dominos) {
+			var imgTag = "<img class='handDomino' src= '" + imgSrcVert.replace("11", dominos[i]) + "' style='position: absolute; top: 10px; left: " + domPosX + "px' />";
+			domPosX += dominoWidth + 9;
+			handDiv.append(imgTag);
+		}
+		$("#bidWinnerHeader").html("");
+
+		ApplyHandEvents();
+	}
+
+	function GetBid(msg) { 
+		$("div.player .playerName").removeClass("highlighted");
+		var header = $("#player" + msg.WhoseTurn + " .playerName");
+		header.addClass("highlighted");
+		
+		if ( msg.WhoseTurn != 0 ) return;
+		$("div.tricksOuter").hide(200);
+		$("div.bidForm").show(200);
+		$("#Bid_IsLow").attr('checked', false);
+		$("#Bid_Trump").val("none");
+
+		GetValidBidAmounts();
+		GetValidSuits();
+		DisplayErrorMessage("Please bid.");
+	}
+
+	function GetValidBidAmounts() {
+		var isLow = $("#Bid_IsLow").attr('checked');
+		$.ajax({
+			type: "POST",
+			url: '@Url.Action("GetValidBidAmounts")',
+			data: "{'isLow':'" + isLow + "'}",
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+			success: function (result) {
+				var options = $("#Bid_Amount");
+				options.children().remove();
+				$.each(result, function(item) {
+					options.append($("<option />").val(result[item].Value).text(result[item].Text));
+				}); 
+			},
+			error: function (xhr, status, error) {
+				DisplayErrorMessage("Unable update bid amounts: " + status + "(" + error + ")");
+			}
+		});
+	}
+
+	function GetValidSuits() {
+		var isLow = $("#Bid_IsLow").attr('checked');
+		$.ajax({
+			type: "POST",
+			url: '@Url.Action("GetValidSuits")',
+			data: "{'isLow':'" + isLow + "'}",
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+			success: function (result) {
+				var options = $("#Bid_Trump");
+				options.children().remove();
+				$.each(result, function(item) {
+					options.append($("<option />").val(result[item].Value).text(result[item].Text));
+				}); 
+			},
+			error: function (xhr, status, error) {
+				DisplayErrorMessage("Unable update bid suits: " + status + "(" + error + ")");
+			}
+		});
+	}
+
+	function BidMade(msg) { 
+		$("#player" + msg.WhoseTurn + " .playerName").html(playerNames[msg.WhoseTurn] + ": " + (msg.BidAmount == 0 ? "Pass" : msg.BidAmount));
+		AddMessage(GetPlayerNameBySeat(msg.WhoseTurn) + (msg.BidAmount > 0 ? " bid " + msg.BidAmount : " passed"));
+	}
+
+	function BidWon(msg) {
+		var headers = $("div.player .playerName");
+		for (j=0; j < 4; j++)
+		{
+			var idx = headers[j].innerHTML.indexOf(':');
+			if ( idx >= 0 ) {
+				headers[j].innerHTML = headers[j].innerHTML.substring(0, idx);
+			}
+		}
+
+		$("#bidWinnerHeader").html("Bid Winner: " + msg.BidWinnerName + ", " + msg.TrumpName + ", " + msg.BidAmount + (msg.IsLow ? " low" : ""));
+		AddMessage(msg.BidWinnerName + " won the bid with " + msg.BidAmount + (msg.IsLow ? " low" : "") + " " + msg.TrumpName);
+	}
+
+	function GetPlay(whoseTurn) {
+		$("div.player .playerName").removeClass("highlighted");
+		var header = $("#player" + whoseTurn + " .playerName");
+		header.addClass("highlighted");
+		if ( whoseTurn != 0 ) return;
+		$("#PlayDiv").show(200);
+		DisplayErrorMessage("Please play.")
+	}
+
+	function PlayMade(msg) {
+		var img = $("#player" + msg.WhoseTurn + " img");
+		var d = img[0];
+		var dots = GetDots(d);
+		var newSrc = d.src.replace('dots=' + dots, 'dots=' + msg.Dots);
+		img[0].src = newSrc;
+		AddMessage(GetPlayerNameBySeat(msg.WhoseTurn) + " played " + msg.Dots);
+	}
+
+	function TrickWon(msg) {
+		var tricksDiv;
+		if ( msg.TrickWinner % 2 == 0 ) { // My team won
+			tricksDiv = $("#ourTricksInner");
+		} else {
+			tricksDiv = $("#theirTricksInner");
+		}
+		var dominos = msg.Trick.split(",");
+		var html = "<div>"
+		for (i in dominos) {
+			var imgTag = "<img src= '" + imgSrcVertSmall.replace("11", dominos[i]) + "'/>";
+			html = html + imgTag;
+		}
+		html = html + "</div>";
+		tricksDiv.append(html);
+		tricksDiv[0].scrollTop = tricksDiv[0].scrollHeight;
+
+		var img = $("div.player img");
+		for (j=0; j < 4; j++)
+		{
+			var d = img[j];
+			var dots = GetDots(d);
+			var newSrc = d.src.replace('dots=' + dots, 'dots= ' + (d.parentNode.id == 'player0' ? '~' : ' '));
+			img[j].src = newSrc;
+		}
+		AddMessage(GetPlayerNameBySeat(msg.TrickWinner) + " won the trick");
+	}
+
+	function MarkWon(msg) {
+		$(".theirTricksDisplay").html("Them: " + msg.TheirMarks);
+		$(".ourTricksDisplay").html("Us: " + msg.OurMarks);
+		$(".tricksInner").empty();
+		if ( (msg.BidWinner % 2 == 0) == msg.YouWon ) {
+			AddMessage(GetPlayerNameBySeat(msg.BidWinner) + " made his/her bid");
+		} else {
+			AddMessage(GetPlayerNameBySeat(msg.BidWinner) + " was set");
+		}
+		AddMessage((msg.YouWon ? "Your" : "Their") + " team won " + msg.MarksBet + " mark" + (msg.MarksBet > 1 ? "s" : ""));
+	}
+
+	function GameWon(msg) {
+		AddMessage((msg.YouWon ? "Your" : "Their") + " team won the game");
+		$("div.dominoDropppable").droppable("disable");
+		$("img.handDomino").draggable("disable");
+		$("img.handDomino").unbind("click"); 
+		gameOver = true;
+	}
+
+	function ServerError(msg) {
+		DisplayErrorMessage(msg.Message);
+	}
+
+	function ApplyHandEvents() {
+		$("img.handDomino").draggable({
+			stop: function (event, ui) {
+				var dom = $(this);
+				var d = $(this)[0];
+				var dots = GetDots(d);
+				var x = ui.position.left;
+				var y = ui.position.top;
+				var data = "{'dots':'" + dots + "', 'x':" + x + ", 'y':" + y + "}";
+				$.ajax({
+					type: "POST",
+					url: '@Url.Action("MoveDomino")',
+					data: data,
+					contentType: "application/json; charset=utf-8",
+					dataType: "json",
+					success: function (result) {
+						dom.attr({ position: 'absolute', top: ui.offset.top, left: ui.offset.left }); // Have to set them all at once for FF
+						/* d.style.top = ui.offset.top;
+						d.style.left = ui.offset.left;
+						d.style.position = 'absolute'; */
+					},
+					error: function (xhr, status, error) {
+						DisplayErrorMessage("Unable to move domino: " + status + "(" + error + ")");
+					}
+				});
+			}
+		});
+		$("img.handDomino").addTouch();
+
+		$("img.handDomino").click(function () {
+			var d = $(this)[0];
+			var dots = GetDots(d);
+			var dotsFlipped = dots.substr(1, 1) + dots.substr(0, 1);
+			var newSrc = d.src.replace('dots=' + dots, 'dots=' + dotsFlipped);
+			$.ajax({
+				type: "POST",
+				url: '@Url.Action("FlipDomino")',
+				data: "{'dots':'" + dots + "'}",
+				contentType: "application/json; charset=utf-8",
+				dataType: "json",
+				success: function (result) {
+					d.src = newSrc;
+				},
+				error: function (xhr, status, error) {
+					DisplayErrorMessage("Unable to flip domino: " + status + "(" + error + ")");
+				}
+			});
+		});
+
+	}
+
+	function PostBid(button) {
+		var $form = $(button).parents('form');
+		$.ajax({
+			type: "POST", 
+			url: '@Url.Action("Bid")',
+			data: $form.serialize(),
+			success: function(result) {
+				if (result == "") {
+					$("div.bidForm").hide(200);
+					$("div.tricksOuter").show(200);
+				}
+				DisplayErrorMessage(result);
+			},
+			error: function(xhr, status, error) {
+				DisplayErrorMessage("Unable to submit bid: " + status + "(" + error + ")");
+			}             
+		});    
+		return false; // if it's a link to prevent post  
+	}
+
+	function GetBidSuggestion() {
+		$.ajax({
+			type: "POST",
+			url: '@Url.Action("GetBidSuggestion")',
+			data: "",
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+			success: function (result) {
+				AddMessage("You should bid: " + result);
+			},
+			error: function (xhr, status, error) {
+				DisplayErrorMessage("Unable to get bid suggestion: " + status + "(" + error + ")");
+			}
+		});
+
+		return false;
+	}
+
+	function GetPlaySuggestion() {
+		$.ajax({
+			type: "POST",
+			url: '@Url.Action("GetPlaySuggestion")',
+			data: "",
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+			success: function (result) {
+				AddMessage("You should play: " + result);
+			},
+			error: function (xhr, status, error) {
+				DisplayErrorMessage("Unable to get play suggestion: " + status + "(" + error + ")");
+			}
+		});
+
+		return false;
+	}
+
+	function SaveHand() {
+		if (@Model.PlayerId < 0) {
+			alert("You must sign in to save hands.");
+			return false;
+		}
+		$.ajax({
+			type: "POST",
+			url: '@Url.Action("SaveHand")',
+			data: "",
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+			error: function (xhr, status, error) {
+				DisplayErrorMessage("Unable to save hand: " + status + "(" + error + ")");
+			}
+		});
+		return false;
+	}
+
+
+
+	function DisplayErrorMessage(msg) {
+		if ( msg != "" ) {
+			AddMessage(msg, true);
+		} 
+	}
+
+	function GetPlayerNameBySeat(seat) {
+		return playerNames[seat];
+	}
+
+	function AddMessage(msg) {
+		AddMessage(msg, false);
+	}
+
+	function AddMessage(msg, highlight) {
+		var messagesDiv = $("#messageDiv");
+		messagesDiv.append('<div class="' + (highlight ? 'highlighted' : '') + '">' + msg + '</div>');
+		messagesDiv[0].scrollTop = messagesDiv[0].scrollHeight;
+	}
+
+	function GetDots(dominoImg) {
+		var src = dominoImg.src;
+		var idx = src.indexOf('dots=');
+		var idx2 = src.indexOf('&size');
+		var dots = src.slice(idx + 5, idx2);
+		return dots;
+	}
+</script>
+
+<div id="container" class="gameContainer">
+	<div id="bidFormDiv" class="bidForm" style="@Model.GetBidDivStyle()">
+		<h3 style="text-align: center">Your Bid</h3>
+		@using (Html.BeginForm(null, null, FormMethod.Post, new { id = "bidForm" }))
+{
+			<table class="noborder" width="100%">
+			<tr>
+				<td align="right">Low?</td> 
+				<td>@Html.CheckBoxFor(m => m.Bid.IsLow)</td>
+			</tr>
+			<tr>
+				<td align="right">Suit:</td>
+				<td>@Html.DropDownListFor(m => m.Bid.Trump, Model.Suits())</td>
+			</tr>
+			<tr>
+				<td align="right">Amount:</td>
+				<td>@Html.DropDownListFor(m => m.Bid.Amount, Model.ValidBidAmounts())</td>
+			</tr>
+			<tr>
+				<td align="center" colspan="2">
+					<input type="button" value="Submit Bid" onclick="return PostBid(this)" />
+				</td>
+			</tr>
+			<tr>
+				<td align="center" colspan="2">
+					@if (@Model.AllowHints())
+	{
+						<a href="href=@Url.Action("GetBidSuggestion")" onclick="return GetBidSuggestion()">Suggest Bid</a><br />
+	}
+						<a href="href=@Url.Action("SaveHand")" onclick="return SaveHand()">Save Hand</a>
+				</td>
+			</tr>
+
+			</table>
+
+			<table width="100%" class="noborder">
+				<tr align="center">
+					<td><span id="bidUs" class="ourTricksDisplay" style="text-align: center">Us: @Model.OurMarks</span></td>
+					<td><span id="bidThem" class="theirTricksDisplay" style="text-align: center">Them: @Model.TheirMarks</span></td>
+				</tr>
+			</table>
+		
+}
+	</div>
+
+	<div id="theirTricks" class="tricksOuter" style="@Model.GetTricksDivStyle()">
+		<h3 class="theirTricksDisplay" style="text-align: center">Them: @Model.TheirMarks</h3>
+		<div id="theirTricksInner" class="tricksInner">
+			@foreach (Trick t in Model.TheirTricks())
+   {
+				<div>
+				@foreach (Domino d in t)
+	{
+		if ( d != null ) {
+					<img class="handDomino" 
+						src=@Url.Action("GetDominoImage", "Game", new RouteValueDictionary(new { dots = d.ToString(), size = Model.DominoWidth, horizontal = false })) 
+					/>}
+	}
+				</div>
+   }
+		</div>
+	</div>
+	<div id="center" style="float: left;" >
+		<div id="playersDiv" class="players">
+			<table width="100%" class="noborder">
+				<tr>
+					<td style="border: none"></td>
+					<td align="center" valign="middle">
+						<div id="player2" class="player">
+							<span class="playerName @Model.GetPlayerHeaderClass(2)">@Model.PlayerNameBySeat(2)</span><br />
+							<img id="played2" class="playedDomino" src=@Url.Action("GetDominoImage", "Game", new RouteValueDictionary(new { dots = Model.GetPlayedDotsBySeat(2), size = Model.DominoWidth, horizontal = true })) />
+						</div>
+					</td>
+					<td></td>
+				</tr>
+				<tr>
+					<td align="center" valign="middle" >
+						<div id="player1" class="player">
+							<span class="playerName @Model.GetPlayerHeaderClass(1)">@Model.PlayerNameBySeat(1)</span><br />
+							<img id="played1" class="playedDomino" src=@Url.Action("GetDominoImage", "Game", new RouteValueDictionary(new { dots = Model.GetPlayedDotsBySeat(1), size = Model.DominoWidth, horizontal = true })) />
+						</div>
+					</td>
+
+					<td class="dominoDropppable">
+						<div id="bidWinnerDiv" class="bidWinner dominoDroppable">
+							<span id="bidWinnerHeader">@Model.BidDescription()</span><br />
+						</div>
+
+						<div class="dominoDropppable" style="text-align: center">
+							@if (@Model.AllowHints())
+	   {
+								<a href="href=@Url.Action("GetPlaySuggestion")" id="PlayDiv" style="@Model.GetPlayDivStyle()" onclick="return GetPlaySuggestion()">Suggest Play</a><br />
+	   }
+						</div>
+					</td>
+
+					<td align="center" valign="middle">
+						<div id="player3" class="player">
+							<span class="playerName @Model.GetPlayerHeaderClass(3)">@Model.PlayerNameBySeat(3)</span><br />
+							<img id="played3" class="playedDomino" src=@Url.Action("GetDominoImage", "Game", new RouteValueDictionary(new { dots = Model.GetPlayedDotsBySeat(3), size = Model.DominoWidth, horizontal = true })) />
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="center" valign="middle" class="dominoDropppable">
+						<div id="player0" class="player dominoDropppable">
+							<span class="playerName @Model.GetPlayerHeaderClass(0)">@Model.PlayerNameBySeat(0)</span><br />
+							<img id="played0" class="playedDomino" src=@Url.Action("GetDominoImage", "Game", new RouteValueDictionary(new { dots = Model.GetPlayedDotsBySeat(0), size = Model.DominoWidth, horizontal = true })) />
+						</div>
+					</td>
+					<td>
+						
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div id="hand" class="hand">
+			@foreach (Domino d in Model.GetPlayerBySeat(0).Hand)
+   {
+				<img class="handDomino" style="@d.GetPositionStyle()"
+					src=@Url.Action("GetDominoImage", "Game", new RouteValueDictionary(new { dots = d.ToString(), size = Model.HandDominoWidth, horizontal = false })) 
+				/>
+   }
+		</div>
+		<div id="messageDivOuter" class="messagesOuter">
+			<div id="messageDiv" class="messages">
+			</div>
+		</div>
+	</div>
+	<div id="ourTricks" class="tricksOuter" style="@Model.GetTricksDivStyle()" >
+		<h3 class="ourTricksDisplay" style="text-align: center">Us: @Model.OurMarks</h3>
+
+		<div id="ourTricksInner" class="tricksInner">
+			@foreach (Trick t in Model.OurTricks())
+   {
+				<div>
+				@foreach (Domino d in t)
+	{
+					<img class="handDomino"
+						src=@Url.Action("GetDominoImage", "Game", new RouteValueDictionary(new { dots = d.ToString(), size = Model.DominoWidth, horizontal = false })) 
+					/>
+	}
+				</div>
+			}
+		</div>
+	</div>
+	<br style="clear: both" />
+</div>
+<!--
+<div style="border: 5px solid black; clear:both; height: 400px; width:750x;">
+hi
+</div>
+-->
